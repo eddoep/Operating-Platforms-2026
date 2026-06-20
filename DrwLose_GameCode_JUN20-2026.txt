@@ -1,0 +1,548 @@
+package com.gamingroom;
+
+
+src/com/gamingroom/
+
+
+ProgramDriver.java
+
+
+
+
+1.  Entity.java
+
+
+package com.gamingroom;
+
+/**
+ * Base class for application entities that share an identifier and name.
+ */
+public abstract class Entity {
+    private final long id;
+    private final String name;
+
+    /**
+     * Creates an entity with a unique identifier and name.
+     *
+     * @param id unique identifier for the entity
+     * @param name unique name for the entity
+     */
+    protected Entity(long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    /**
+     * @return the unique identifier
+     */
+    public long getId() {
+        return id;
+    }
+
+    /**
+     * @return the entity name
+     */
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + " [id=" + id + ", name=" + name + "]";
+    }
+}
+
+
+...........................................................
+
+
+2.  Game.java
+
+
+package com.gamingroom;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Represents a game that can contain one or more teams.
+ */
+public class Game extends Entity {
+    private final List<Team> teams = new ArrayList<Team>();
+
+    /**
+     * Creates a game with a unique identifier and name.
+     *
+     * @param id unique game identifier
+     * @param name unique game name
+     */
+    public Game(long id, String name) {
+        super(id, name);
+    }
+
+    /**
+     * Adds a team to this game when the team name is not already in use.
+     *
+     * @param name team name to add
+     * @return the existing or newly created team
+     */
+    public Team addTeam(String name) {
+        for (Team team : teams) {
+            if (team.getName().equalsIgnoreCase(name)) {
+                return team;
+            }
+        }
+
+        Team team = new Team(GameService.getNextTeamId(), name);
+        teams.add(team);
+        return team;
+    }
+
+    /**
+     * @return number of teams assigned to this game
+     */
+    public int getTeamCount() {
+        return teams.size();
+    }
+
+    /**
+     * Returns a team by list index.
+     *
+     * @param index team index
+     * @return selected team
+     */
+    public Team getTeam(int index) {
+        return teams.get(index);
+    }
+
+    @Override
+    public String toString() {
+        return "Game [id=" + getId() + ", name=" + getName() + "]";
+    }
+}
+
+
+...............................................................
+
+
+3.  GameService.java
+
+
+package com.gamingroom;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Singleton service that manages games and unique identifiers.
+ */
+public class GameService {
+    private static final List<Game> games = new ArrayList<Game>();
+    private static long nextGameId = 1;
+    private static long nextTeamId = 1;
+    private static long nextPlayerId = 1;
+
+    private static GameService service = null;
+
+    /**
+     * Private constructor prevents other classes from creating GameService objects.
+     */
+    private GameService() {
+    }
+
+    /**
+     * Returns the one allowed GameService instance.
+     *
+     * @return singleton GameService instance
+     */
+    public static GameService getInstance() {
+        if (service == null) {
+            service = new GameService();
+        }
+        return service;
+    }
+
+    /**
+     * Provides the next unique team identifier.
+     *
+     * @return next team id
+     */
+    public static long getNextTeamId() {
+        return nextTeamId++;
+    }
+
+    /**
+     * Provides the next unique player identifier.
+     *
+     * @return next player id
+     */
+    public static long getNextPlayerId() {
+        return nextPlayerId++;
+    }
+
+    /**
+     * Adds a game if the supplied game name is not already in use.
+     *
+     * @param name unique game name
+     * @return the existing or newly created game
+     */
+    public Game addGame(String name) {
+        for (Game game : games) {
+            if (game.getName().equalsIgnoreCase(name)) {
+                return game;
+            }
+        }
+
+        Game game = new Game(nextGameId++, name);
+        games.add(game);
+        return game;
+    }
+
+    /**
+     * Returns the game at the specified list index.
+     *
+     * @param index game index
+     * @return selected game
+     */
+    Game getGame(int index) {
+        return games.get(index);
+    }
+
+    /**
+     * Returns a game by unique identifier.
+     *
+     * @param id unique game id
+     * @return matching game or null when no match exists
+     */
+    public Game getGame(long id) {
+        for (Game game : games) {
+            if (game.getId() == id) {
+                return game;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns a game by unique name.
+     *
+     * @param name game name to find
+     * @return matching game or null when no match exists
+     */
+    public Game getGame(String name) {
+        for (Game game : games) {
+            if (game.getName().equalsIgnoreCase(name)) {
+                return game;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return number of active games
+     */
+    public int getGameCount() {
+        return games.size();
+    }
+}
+
+
+............................................................
+
+
+4.  Player.java
+
+
+package com.gamingroom;
+
+/**
+ * Represents a player assigned to a team.
+ */
+public class Player extends Entity {
+
+    /**
+     * Creates a player with a unique identifier and name.
+     *
+     * @param id unique player identifier
+     * @param name unique player name within the team
+     */
+    public Player(long id, String name) {
+        super(id, name);
+    }
+
+    @Override
+    public String toString() {
+        return "Player [id=" + getId() + ", name=" + getName() + "]";
+    }
+}
+
+
+............................................................
+
+
+5.  Team.java
+
+
+package com.gamingroom;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Represents a team that contains multiple players.
+ */
+public class Team extends Entity {
+    private final List<Player> players = new ArrayList<Player>();
+    private int score = 0;
+
+    /**
+     * Creates a team with a unique identifier and name.
+     *
+     * @param id unique team identifier
+     * @param name unique team name within the game
+     */
+    public Team(long id, String name) {
+        super(id, name);
+    }
+
+    /**
+     * Adds a player to this team when the player name is not already in use.
+     *
+     * @param name player name to add
+     * @return the existing or newly created player
+     */
+    public Player addPlayer(String name) {
+        for (Player player : players) {
+            if (player.getName().equalsIgnoreCase(name)) {
+                return player;
+            }
+        }
+
+        Player player = new Player(GameService.getNextPlayerId(), name);
+        players.add(player);
+        return player;
+    }
+
+    /**
+     * Adds points to this team score.
+     *
+     * @param points number of points to add
+     */
+    public void addPoints(int points) {
+        score += points;
+    }
+
+    /**
+     * @return current team score
+     */
+    public int getScore() {
+        return score;
+    }
+
+    /**
+     * @return number of players assigned to this team
+     */
+    public int getPlayerCount() {
+        return players.size();
+    }
+
+    /**
+     * Returns a player by list index.
+     *
+     * @param index player index
+     * @return selected player
+     */
+    public Player getPlayer(int index) {
+        return players.get(index);
+    }
+
+    @Override
+    public String toString() {
+        return "Team [id=" + getId() + ", name=" + getName() + ", score=" + score + "]";
+    }
+}
+
+
+............................................................
+
+
+6.  SingletonTester.java
+
+
+package com.gamingroom;
+
+/**
+ * Tests that the same GameService instance is reused.
+ */
+public class SingletonTester {
+
+    /**
+     * Prints the current games and confirms that both variables reference the same service.
+     */
+    public void testSingleton() {
+        GameService service = GameService.getInstance();
+        GameService anotherService = GameService.getInstance();
+
+        for (int i = 0; i < service.getGameCount(); i++) {
+            System.out.println(service.getGame(i));
+        }
+
+        if (service == anotherService) {
+            System.out.println("Singleton test passed: Both variables reference the same GameService instance.");
+        } else {
+            System.out.println("Singleton test failed: Variables reference different GameService instances.");
+        }
+    }
+}
+
+
+............................................................
+
+
+7.  ProgramDriver.java
+
+
+package com.gamingroom;
+
+import java.util.Scanner;
+
+/**
+ * Console game application for Draw It or Lose It.
+ */
+public class ProgramDriver {
+    private static final Scanner SCANNER = new Scanner(System.in);
+
+    private static final String[] PUZZLES = {
+            "SPACE SHUTTLE",
+            "JAVA PROGRAM",
+            "ELECTRIC CAR",
+            "COMPUTER MOUSE"
+    };
+
+    public static void main(String[] args) {
+        GameService service = GameService.getInstance();
+        Game game = service.addGame("Draw It or Lose It");
+
+        System.out.println("====================================");
+        System.out.println(" Welcome to Draw It or Lose It");
+        System.out.println("====================================");
+
+        Team teamOne = createTeam(game, "Team Alpha");
+        Team teamTwo = createTeam(game, "Team Beta");
+
+        playGame(game, teamOne, teamTwo);
+        printFinalResults(teamOne, teamTwo);
+
+        SingletonTester tester = new SingletonTester();
+        tester.testSingleton();
+
+        SCANNER.close();
+    }
+
+    private static Team createTeam(Game game, String teamName) {
+        Team team = game.addTeam(teamName);
+        System.out.println("\nCreating " + team.getName());
+
+        System.out.print("Enter first player name for " + team.getName() + ": ");
+        String playerOneName = readNonBlankLine();
+        team.addPlayer(playerOneName);
+
+        System.out.print("Enter second player name for " + team.getName() + ": ");
+        String playerTwoName = readNonBlankLine();
+        team.addPlayer(playerTwoName);
+
+        return team;
+    }
+
+    private static void playGame(Game game, Team teamOne, Team teamTwo) {
+        System.out.println("\nGame started: " + game.getName());
+        System.out.println("There are 4 rounds. Each correct answer earns 10 points.");
+
+        for (int round = 1; round <= 4; round++) {
+            Team activeTeam = (round % 2 == 1) ? teamOne : teamTwo;
+            Team otherTeam = (round % 2 == 1) ? teamTwo : teamOne;
+            String puzzle = PUZZLES[round - 1];
+
+            System.out.println("\n------------------------------------");
+            System.out.println("Round " + round + " - " + activeTeam.getName() + " guesses first.");
+            System.out.println("Clue: " + makeClue(puzzle));
+
+            System.out.print(activeTeam.getName() + ", enter your guess: ");
+            String guess = readNonBlankLine();
+
+            if (isCorrectGuess(guess, puzzle)) {
+                activeTeam.addPoints(10);
+                System.out.println("Correct! " + activeTeam.getName() + " earns 10 points.");
+            } else {
+                System.out.println("Incorrect. " + otherTeam.getName() + " gets one chance to steal.");
+
+                System.out.print(otherTeam.getName() + ", enter your guess: ");
+                String stealGuess = readNonBlankLine();
+
+                if (isCorrectGuess(stealGuess, puzzle)) {
+                    otherTeam.addPoints(10);
+                    System.out.println("Correct steal! " + otherTeam.getName() + " earns 10 points.");
+                } else {
+                    System.out.println("No correct answer. The puzzle was: " + puzzle);
+                }
+            }
+
+            printScoreboard(teamOne, teamTwo);
+        }
+    }
+
+    private static String makeClue(String puzzle) {
+        StringBuilder clue = new StringBuilder();
+
+        for (int i = 0; i < puzzle.length(); i++) {
+            char current = puzzle.charAt(i);
+
+            if (current == ' ') {
+                clue.append("  ");
+            } else if (i == 0 || puzzle.charAt(i - 1) == ' ') {
+                clue.append(current).append(' ');
+            } else {
+                clue.append("_ ");
+            }
+        }
+
+        return clue.toString().trim();
+    }
+
+    private static boolean isCorrectGuess(String guess, String answer) {
+        return guess.trim().equalsIgnoreCase(answer);
+    }
+
+    private static String readNonBlankLine() {
+        String input = SCANNER.nextLine().trim();
+
+        while (input.isEmpty()) {
+            System.out.print("Please enter a value: ");
+            input = SCANNER.nextLine().trim();
+        }
+
+        return input;
+    }
+
+    private static void printScoreboard(Team teamOne, Team teamTwo) {
+        System.out.println("Scoreboard: " + teamOne.getName() + " = " + teamOne.getScore()
+                + ", " + teamTwo.getName() + " = " + teamTwo.getScore());
+    }
+
+    private static void printFinalResults(Team teamOne, Team teamTwo) {
+        System.out.println("\n====================================");
+        System.out.println(" Final Results");
+        System.out.println("====================================");
+
+        printScoreboard(teamOne, teamTwo);
+
+        if (teamOne.getScore() > teamTwo.getScore()) {
+            System.out.println("Winner: " + teamOne.getName());
+        } else if (teamTwo.getScore() > teamOne.getScore()) {
+            System.out.println("Winner: " + teamTwo.getName());
+        } else {
+            System.out.println("The game ended in a tie.");
+        }
+    }
+}
+
